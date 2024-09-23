@@ -1,6 +1,7 @@
 # unplugin-catch-throw
 
 如果你的项目中存在catch捕获异常，但是又未把这个异常抛出，导致项目出现问题无法排查
+
 如果你在做前端监控 - promise异常捕获
 
 当前插件通过在try/catch块或者promise.catch插入Promise.reject，把异常抛出

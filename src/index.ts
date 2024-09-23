@@ -6,7 +6,7 @@ import { transform } from './core/transform'
 
 export const unpluginFactory: UnpluginFactory<Options | undefined> = ({
   include = [/\.[jt]sx?$/, /\.vue$/],
-  exclude = [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/, /\/log-report\//],
+  exclude = [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/],
 } = {}) => {
   // 检测的文件类型范围
   const filter = createFilter(include, exclude)

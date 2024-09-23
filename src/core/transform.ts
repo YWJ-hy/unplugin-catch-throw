@@ -9,19 +9,49 @@ const _traverse = (
   typeof traverse === 'function' ? traverse : (traverse as any).default
 ) as typeof traverse
 
-// 递归查找变量绑定，直到找到 new Promise 或者找不到绑定
-function findPromiseInitialization(binding?: Binding) {
-  if (!binding || !t.isVariableDeclarator(binding.path.node))
-    return false
-
-  const init = binding.path.node.init
-  if (t.isNewExpression(init) && t.isIdentifier(init.callee, { name: 'Promise' })) {
+function isReturnPromise(body: t.Expression | t.BlockStatement) {
+  if (t.isNewExpression(body) && t.isIdentifier(body.callee, { name: 'Promise' })) {
     return true
   }
+  if (t.isBlockStatement(body)) {
+    const returnStmt = body.body.find(stmt => t.isReturnStatement(stmt))
+    if (returnStmt && t.isNewExpression(returnStmt.argument) && t.isIdentifier(returnStmt.argument.callee, { name: 'Promise' })) {
+      return true
+    }
+  }
+  return false
+}
 
-  if (t.isIdentifier(init)) {
-    const nextBinding = binding.scope.getBinding(init.name)
-    return findPromiseInitialization(nextBinding)
+// 递归查找变量绑定，直到找到 new Promise 或者找不到绑定
+function findPromiseInitialization(binding?: Binding) {
+  if (!binding)
+    return false
+
+  if (t.isVariableDeclarator(binding.path.node)) {
+    const init = binding.path.node.init
+    // 处理const p = new Promise();
+    if (t.isNewExpression(init) && t.isIdentifier(init.callee, { name: 'Promise' })) {
+      return true
+    }
+
+    // 处理箭头函数或函数返回 new Promise
+    if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {
+      if (init.async) return true;
+      const body = init.body
+      if (isReturnPromise(body))
+        return true
+    }
+
+    if (t.isIdentifier(init)) {
+      const nextBinding = binding.scope.getBinding(init.name)
+      return findPromiseInitialization(nextBinding)
+    }
+  }
+
+  if (t.isFunctionDeclaration(binding.path.node)) {
+    const body = binding.path.node.body
+    if (isReturnPromise(body))
+      return true
   }
 
   return false
@@ -64,22 +94,20 @@ export function transform(code: string, id: string) {
         && t.isIdentifier(callee.property, { name: 'catch' })
         && path.node.arguments.length > 0
       ) {
-        let object = callee.object
-
         const isPromiseCall = (() => {
           // 判断是否new Promise().catch()
-          if (t.isCallExpression(object)) {
-            const _callee = object.callee
-            const isTrue
-                  = t.isMemberExpression(_callee)
-                  && t.isNewExpression(_callee.object)
-                  && t.isIdentifier(_callee.object.callee, { name: 'Promise' })
-            if (isTrue)
-              return isTrue
-          }
+          const isTrue
+              = t.isMemberExpression(callee)
+              && t.isNewExpression(callee.object)
+              && t.isIdentifier(callee.object.callee, { name: 'Promise' })
+          if (isTrue)
+            return isTrue
           // 判断是否new Promise()赋值给变量，然后变量.catch()
-          if (t.isCallExpression(object) && t.isMemberExpression(object.callee)) {
-            object = object.callee.object
+          if (t.isMemberExpression(callee)) {
+            let object = callee.object
+            if (t.isCallExpression(object) && t.isIdentifier(object.callee)) {
+              object = object.callee
+            }
             const binding = t.isIdentifier(object) && path.scope.getBinding(object.name)
             return binding ? findPromiseInitialization(binding) : false
           }
