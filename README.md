@@ -21,6 +21,31 @@ interface Options {
 }
 ```
 
+## 支持注释排除处理(try/catch 支持两种注释方式，new Promise仅支持内联注释)
+
+```ts
+/*! @ignore_catch_throw */
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  // test
+}
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  /*! @ignore_catch_throw */
+}
+new Promise((resolve, reject) => {
+  setTimeout(() => {
+    reject(new Error('ignore comment'))
+  })
+}).catch(() => {
+  /*! @ignore_catch_throw */
+})
+```
+
 <details>
 <summary>Vite</summary><br>
 

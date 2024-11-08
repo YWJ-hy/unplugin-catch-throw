@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    CatchThrow({ exclude: [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/, /\/catch\.ts$/] }),
+    CatchThrow({ exclude: [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/, /\/exclude_file\.ts$/] }),
     inspect(),
   ],
   resolve: {

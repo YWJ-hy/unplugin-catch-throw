@@ -1,13 +1,31 @@
-<script setup lang="ts">
-import './exclude_file'
-import './catch'
-import './ignore_comment'
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  // test
+}
+/*! @ignore_catch_throw */
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  // test
+}
+
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  /*! @ignore_catch_throw */
+}
 
 const p1 = new Promise((resolve, reject) => {
   setTimeout(() => {
     reject(new Error('p1 rejected'))
   })
-}).catch(() => {})
+}).catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 const p2 = new Promise((resolve, reject) => {
   setTimeout(() => {
@@ -16,11 +34,17 @@ const p2 = new Promise((resolve, reject) => {
 })
 
 const p2_1 = p2
-p2_1.catch(() => {})
+p2_1.catch(() => {
+  /*! @ignore_catch_throw */
+})
 const p2_2 = p2
-p2_2.catch(() => {})
+p2_2.catch(() => {
+  /*! @ignore_catch_throw */
+})
 const p2_3 = p2_2
-p2_3.catch(() => {})
+p2_3.catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 // 函数定义
 function proFn() {
@@ -30,10 +54,14 @@ function proFn() {
     })
   })
 }
-proFn().catch(() => {})
+proFn().catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 const proFnConst = proFn
-proFnConst().catch(() => {})
+proFnConst().catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 // 箭头函数
 const proFn2 = () => {
@@ -43,7 +71,9 @@ const proFn2 = () => {
     })
   })
 }
-proFn2().catch(() => {})
+proFn2().catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 const p3 = new Promise((resolve, reject) => {
   setTimeout(() => {
@@ -55,7 +85,9 @@ const p3 = new Promise((resolve, reject) => {
 const proFn3 = async () => {
   return await p3
 }
-proFn3().catch(() => {})
+proFn3().catch(() => {
+  /*! @ignore_catch_throw */
+})
 
 async function asycnFn() {
   try {
@@ -63,7 +95,7 @@ async function asycnFn() {
   }
   // eslint-disable-next-line unused-imports/no-unused-vars
   catch (err) {
-
+    /*! @ignore_catch_throw */
   }
 }
 asycnFn()
@@ -86,39 +118,3 @@ function testProFn() {
   } }
 }
 testProFn().catch(() => {})
-</script>
-
-<template>
-  <header>
-    unplugin-catch-throw
-  </header>
-</template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>

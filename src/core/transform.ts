@@ -9,6 +9,8 @@ const _traverse = (
   typeof traverse === 'function' ? traverse : (traverse as any).default
 ) as typeof traverse
 
+const ignoreCatchThrowComment = '! @ignore_catch_throw'
+
 function isReturnPromise(body: t.Expression | t.BlockStatement) {
   if (t.isNewExpression(body) && t.isIdentifier(body.callee, { name: 'Promise' })) {
     return true
@@ -36,7 +38,8 @@ function findPromiseInitialization(binding?: Binding) {
 
     // 处理箭头函数或函数返回 new Promise
     if (t.isArrowFunctionExpression(init) || t.isFunctionExpression(init)) {
-      if (init.async) return true;
+      if (init.async)
+        return true
       const body = init.body
       if (isReturnPromise(body))
         return true
@@ -64,11 +67,26 @@ export function transform(code: string, id: string) {
   const ast = parse(code, {
     sourceType: 'unambiguous',
     sourceFilename: id,
+    attachComment: true,
   })
 
   // 遍历 AST 树
   _traverse(ast, {
     CatchClause(path) {
+      let comments = path.parent.leadingComments || []
+      let hasIgnoreComment = comments.some(comment =>
+        comment.value.trim() === ignoreCatchThrowComment,
+      )
+      if (!hasIgnoreComment) {
+        comments = path.node.body.innerComments || []
+        hasIgnoreComment = comments.some(comment =>
+          comment.value.trim() === ignoreCatchThrowComment,
+        )
+      }
+      // 如果存在忽略注释，直接返回
+      if (hasIgnoreComment)
+        return
+
       const param = path.node.param
       let paramName = t.isIdentifier(param) ? param.name : ''
       const start = path.node.body.start
@@ -118,6 +136,13 @@ export function transform(code: string, id: string) {
           const catchArg = path.node.arguments[0]
 
           if (t.isFunctionExpression(catchArg) || t.isArrowFunctionExpression(catchArg)) {
+            const comments = catchArg.body.innerComments || []
+            const hasIgnoreComment = comments.some(comment =>
+              comment.value.trim() === ignoreCatchThrowComment,
+            )
+            if (hasIgnoreComment)
+              return
+
             const param = catchArg.params[0]
             let paramName = t.isIdentifier(param) ? param.name : ''
             const paramStart = catchArg.start
