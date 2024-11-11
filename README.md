@@ -21,7 +21,9 @@ interface Options {
 }
 ```
 
-## 支持注释排除处理(try/catch 支持两种注释方式，new Promise仅支持内联注释)
+## 支持注释排除处理
+
+### try/catch 支持两种注释方式，new Promise仅支持内联注释
 
 ```ts
 /*! @ignore_catch_throw */
@@ -43,6 +45,27 @@ new Promise((resolve, reject) => {
   })
 }).catch(() => {
   /*! @ignore_catch_throw */
+})
+```
+
+### 文件级注释
+
+```ts
+/*! @ignore_catch_throw-file */
+
+try {
+  throw new Error('ignore comment')
+}
+catch (err) {
+  // test
+}
+
+const p1 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    reject(new Error('p1 rejected'))
+  })
+}).catch(() => {
+
 })
 ```
 

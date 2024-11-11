@@ -10,6 +10,7 @@ const _traverse = (
 ) as typeof traverse
 
 const ignoreCatchThrowComment = '! @ignore_catch_throw'
+const ignoreCatchThrowFileComment = '! @ignore_catch_throw-file'
 
 function isReturnPromise(body: t.Expression | t.BlockStatement) {
   if (t.isNewExpression(body) && t.isIdentifier(body.callee, { name: 'Promise' })) {
@@ -69,6 +70,13 @@ export function transform(code: string, id: string) {
     sourceFilename: id,
     attachComment: true,
   })
+  const fileComments = ast.comments || []
+  const shouldIgnoreFile = fileComments.some(comment =>
+    comment.value.trim() === ignoreCatchThrowFileComment,
+  )
+
+  if (shouldIgnoreFile)
+    return null
 
   // 遍历 AST 树
   _traverse(ast, {
